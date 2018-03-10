@@ -27,12 +27,12 @@ config = tf.contrib.learn.RunConfig(tf_random_seed=42)
 
 #feature_cols = [tf.feature_column.numeric_column("x", shape=[1, 81])]
 feature_cols = tf.contrib.learn.infer_real_valued_columns_from_input(X_train)
-dnn_clf = tf.contrib.learn.DNNClassifier(hidden_units=[200,200],
+dnn_clf = tf.contrib.learn.DNNClassifier(hidden_units=[300,300],
                                          n_classes=10,
                                          feature_columns=feature_cols,
-                                         config=config)#,
-                                         #activation_fn=tf.nn.elu,
-                                         #optimizer=tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=momentum))
+                                         config=config,
+                                         activation_fn=tf.nn.elu,
+                                         optimizer = tf.train.MomentumOptimizer(learning_rate=0.01, momentum=0.9))
 dnn_clf = tf.contrib.learn.SKCompat(dnn_clf)
 
 n=len(X_train)
@@ -41,7 +41,7 @@ i = 0
 for i in range(n):
     y_train1[i] = y_train[i,0]
 i = 0
-dnn_clf.fit(X_train, y_train1, batch_size=500, max_steps=30000)
+dnn_clf.fit(X_train, y_train1, batch_size=100, max_steps=30000)
 
 #dnn_clf = tf.contrib.learn.SKCompat(dnn_clf)
 #dnn_clf.fit(X_train, y_train, batch_size=81, max_steps=4000)
