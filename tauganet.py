@@ -38,7 +38,7 @@ guess = tf.add(guess8, tf.constant(1,dtype=guess8.dtype))
 ##
 
 ## Þjálfunar skilgreyning
-learning_rate = 0.001
+learning_rate = 0.01
 
 #xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y[:,40], logits=logits[40])
 #loss = tf.reduce_mean(xentropy)
@@ -69,13 +69,14 @@ from sudoku import getSud
 suds = 800000   # Fjöldi þrauta í training
 sudokus,solutions = getSud(suds)
 
-def getSet(num, empty=0):
+def getSet(num, maxempty=1): #removes rand[0:maxempty] numbers
     rand = np.random.randint(0, suds, num)
     y = solutions[rand,:]
     #X = sudokus[rand,:]
     X = np.copy(y)
     for i in range(num):
-        X0ind = np.random.randint(0, 81, empty)
+        empty = np.random.randint(0, maxempty) # how many to remove
+        X0ind = np.random.randint(0, 81, empty) # indexes set to 0
         X[i,X0ind]=0
     return X,y
 ##
@@ -100,7 +101,7 @@ loss_old = np.infty
 with tf.Session() as sess:
     init.run()
     saver.restore(sess, ".final/multinums")
-    for rm in range(5,15):
+    for rm in range(1,3):
         print("#####################  {:2d} empty cells  #####################".format(rm))
         Xtrain, ytrain = getSet(batch,rm)
         loss_old = loss.eval(feed_dict={X: Xtrain, sol: ytrain})
@@ -132,7 +133,7 @@ with tf.Session() as sess:
 #import matplotlib.pyplot as plt
 with tf.Session() as sess:
     saver.restore(sess, ".final/multinums")
-    Xtrain, ytrain = getSet(100,3)
+    Xtrain, ytrain = getSet(100,1)
     yprob = Y_proba.eval(feed_dict={X: Xtrain, sol: ytrain})
     #print(asdf)
     acc_test = accuracy.eval(feed_dict={X: Xtrain, sol: ytrain})
