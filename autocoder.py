@@ -81,7 +81,7 @@ with tf.name_scope("Validate"):
 ## Dataset
 suds = 800000   # Fjöldi þrauta í training
 if not 'sudokus' in globals(): # nær ekki aftur í þrautir ef til
-    sudokus = getSud(suds)
+    sudokus, _ = getSud(suds)
 
 def getSet(num): 
     rand = np.random.randint(0, suds, num)
@@ -100,7 +100,8 @@ batch = 100
 loss_old = np.infty
 with tf.Session() as sess:
     init.run()
-    #saver.restore(sess, "./breittnet/save/")
+    reuse_saver.restore(sess, "./reuse/save/")
+    #saver.restore(sess, "./autocoder/save/")
     for epoch in range(epochs):
         Xtrain = getSet(batch)
         sess.run(training_op, feed_dict={X: Xtrain})
@@ -114,8 +115,8 @@ with tf.Session() as sess:
                         feed_dict={X: Xtrain})
                 if loss_new < loss_old:
                     loss_old = loss_new
-                    save_path = saver.save(sess, "./autocoder/save/")
-                    reuse_path = reuse_saver.save(sess, "./reuse/save/")
+                    #save_path = saver.save(sess, "./autocoder/save/")
+                    #reuse_path = reuse_saver.save(sess, "./reuse/save/")
                     print("Checkpoint Saved:")
                 print("{:8d}:  cell acc: {:4.2f}%  accuracy: {:4.2f}%  Loss: {:4.4}  Learning rate: {:.4f}".format(
                         gstep, cellacc_test*100, acc_test*100, loss_new, lrate))
@@ -124,7 +125,8 @@ with tf.Session() as sess:
 
 ## prófum netið
 with tf.Session() as sess:
-    saver.restore(sess,"./autocoder/save/")
+    reuse_saver.restore(sess, "./reuse/save/")
+    #saver.restore(sess,"./autocoder/save/")
     Xtrain = getSet(100)
     acc_test = accuracy.eval(feed_dict={X: Xtrain})
     print("Final test accuracy: {:.2f}%".format(acc_test * 100))

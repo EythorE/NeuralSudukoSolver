@@ -122,8 +122,8 @@ with tf.Session() as sess:
     init.run()
     
     # Bara nota eitt af þessum
-    #reuse_saver.restore(sess, "./reuse/save/") #loada sjalfkóðara
-    #saver.restore(sess, "./sudoku_fitter/save/") #Loada öllum breytum
+    reuse_saver.restore(sess, "./reuse/save/") #loada sjalfkóðara
+    # saver.restore(sess, "./sudoku_fitter/save/") #Loada öllum breytum
     
     Xtrain, ytrain = getSet(batch,rm)
     loss_old = loss.eval(feed_dict={X: Xtrain, sol: ytrain})
