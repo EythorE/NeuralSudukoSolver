@@ -15,15 +15,21 @@ reset_graph(seed=None)
 
 ## Innmerki og þjálfunargögn
 n_inputs = 81
-n_hidden2 = 70
+
+n_hidden1 = 81*10
+n_hidden2 = 81*2
+n_hidden3 = 42
+
 n_outputs = 81*10
 
 X = tf.placeholder(tf.float32, shape=(None, 81), name="X")
 labels=tf.cast(X, dtype=tf.int32)
 
 ## Kóðari layerar sem við endurnýtum
-hidden1 = tf.layers.dense(X, n_outputs, activation=tf.nn.relu, name="hidden_1")
-hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu,name="hidden_2")#n_inputs virkaði
+hidden1 = tf.layers.dense(      X, n_hidden1, activation=tf.nn.relu, name="hidden_1")
+hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden_2")
+hidden3 = tf.layers.dense(hidden2, n_hidden3, activation=tf.nn.relu, name="hidden_3")
+
 
 # næ í breyturnar sem ég vill save-a og bý til saver fyrir þær
 reuse_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
@@ -32,10 +38,11 @@ reuse_saver = tf.train.Saver(reuse_vars_dict)
 
 ## Afkóðari
 
-hidden3 = tf.layers.dense(hidden1, n_outputs, activation=tf.nn.relu, name="hidden_3")
+hidden4 = tf.layers.dense(hidden3, n_hidden2, activation=tf.nn.relu, name="hidden_4")
+hidden5 = tf.layers.dense(hidden4, n_hidden3, activation=tf.nn.relu, name="hidden_5")
     
 with tf.name_scope("logits"):
-    logits = tf.layers.dense(hidden3, n_outputs, name="logits")
+    logits = tf.layers.dense(hidden5, n_outputs, name="logits")
     logit = tf.reshape(logits,[-1,81,10], name="2D_logits")
 
 Y_proba = tf.nn.softmax(logit, name="softmax")
