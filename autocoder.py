@@ -15,7 +15,7 @@ reset_graph(seed=None)
 
 ## Innmerki og þjálfunargögn
 n_inputs = 81
-n_hidden2 = 42
+n_hidden2 = 70
 n_outputs = 81*10
 
 X = tf.placeholder(tf.float32, shape=(None, 81), name="X")
@@ -35,7 +35,7 @@ reuse_saver = tf.train.Saver(reuse_vars_dict)
 hidden3 = tf.layers.dense(hidden1, n_outputs, activation=tf.nn.relu, name="hidden_3")
     
 with tf.name_scope("logits"):
-    logits = tf.layers.dense(hidden1, n_outputs, name="logits")
+    logits = tf.layers.dense(hidden3, n_outputs, name="logits")
     logit = tf.reshape(logits,[-1,81,10], name="2D_logits")
 
 Y_proba = tf.nn.softmax(logit, name="softmax")
@@ -55,7 +55,7 @@ with tf.name_scope("Training"):
     global_step = tf.Variable(0, trainable=False)
     starter_learning_rate = 0.001
     learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
-                                           50000, 0.5, staircase=True)
+                                           10000, 0.5, staircase=True)
     
     optimizer = tf.train.AdamOptimizer(learning_rate)
     training_op = optimizer.minimize(loss, global_step=global_step)
@@ -95,12 +95,12 @@ init = tf.global_variables_initializer()
 
 # Keyrslufasi
 print('keyrsla')
-epochs=200000
+epochs=100000
 batch = 100
-loss_old = np.infty
+
 with tf.Session() as sess:
     init.run()
-    reuse_saver.restore(sess, "./reuse/save/")
+    #reuse_saver.restore(sess, "./reuse/save/")
     #saver.restore(sess, "./autocoder/save/")
     for epoch in range(epochs):
         Xtrain = getSet(batch)
@@ -110,22 +110,24 @@ with tf.Session() as sess:
             file_writer.add_summary(summary, gstep)
             if epoch%1000 == 0:
                 Xtrain = getSet(batch)
-                loss_new, acc_test, cellacc_test, lrate = sess.run(
+                loss_test, acc_test, cellacc_test, lrate = sess.run(
                         [loss, accuracy, cellacc, learning_rate],
                         feed_dict={X: Xtrain})
-                if loss_new < loss_old:
-                    loss_old = loss_new
-                    save_path = saver.save(sess, "./autocoder/save/")
-                    #reuse_path = reuse_saver.save(sess, "./reuse/save/")
-                    print("Checkpoint Saved:")
+
+                save_path = saver.save(sess, "./autocoder/save/")
                 print("{:8d}:  cell acc: {:4.2f}%  accuracy: {:4.2f}%  Loss: {:4.4}  Learning rate: {:.4f}".format(
-                        gstep, cellacc_test*100, acc_test*100, loss_new, lrate))
+                        gstep, cellacc_test*100, acc_test*100, loss_test, lrate))
+    summary, gstep = sess.run([merged, global_step],  feed_dict={X: Xtrain})
+    file_writer.add_summary(summary, gstep)
+    save_path = saver.save(sess, "./autocoder/save/")
 
     
 
 ## prófum netið
 with tf.Session() as sess:
     saver.restore(sess,"./autocoder/save/")
+    # Vista í reuse til að endurnota
+    #reuse_saver.save(sess, "./reuse/save/")
     Xtrain = getSet(100)
     acc_test = accuracy.eval(feed_dict={X: Xtrain})
     print("Final test accuracy: {:.2f}%".format(acc_test * 100))
