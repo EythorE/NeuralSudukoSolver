@@ -16,19 +16,21 @@ reset_graph(seed=None)
 ## Innmerki og þjálfunargögn
 n_inputs = 81
 
-n_hidden1 = 81*10
-n_hidden2 = 81*2
-n_hidden3 = 42
+n_hidden1 = 81*14
+n_hidden2 = 81*7
+
 
 n_outputs = 81*10
 
-X = tf.placeholder(tf.float32, shape=(None, 81), name="X")
+X = tf.placeholder(tf.uint8, shape=(None, 81), name="X")
 labels=tf.cast(X, dtype=tf.int32)
 
+OH = tf.one_hot(X, 10, dtype=tf.float32)
+inp = tf.layers.flatten(OH)
+
 ## Kóðari layerar sem við endurnýtum
-hidden1 = tf.layers.dense(      X, n_hidden1, activation=tf.nn.relu, name="hidden_1")
+hidden1 = tf.layers.dense(    inp, n_hidden1, activation=tf.nn.relu, name="hidden_1")
 hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden_2")
-hidden3 = tf.layers.dense(hidden2, n_hidden3, activation=tf.nn.relu, name="hidden_3")
 
 
 # næ í breyturnar sem ég vill save-a og bý til saver fyrir þær
@@ -38,11 +40,11 @@ reuse_saver = tf.train.Saver(reuse_vars_dict)
 
 ## Afkóðari
 
-hidden4 = tf.layers.dense(hidden3, n_hidden2, activation=tf.nn.relu, name="hidden_4")
-hidden5 = tf.layers.dense(hidden4, n_hidden3, activation=tf.nn.relu, name="hidden_5")
-    
+hidden3 = tf.layers.dense(hidden2, n_hidden1, activation=tf.nn.relu, name="hidden_3")
+
+
 with tf.name_scope("logits"):
-    logits = tf.layers.dense(hidden5, n_outputs, name="logits")
+    logits = tf.layers.dense(hidden3, n_outputs, name="logits")
     logit = tf.reshape(logits,[-1,81,10], name="2D_logits")
 
 Y_proba = tf.nn.softmax(logit, name="softmax")
@@ -60,9 +62,9 @@ with tf.name_scope("Training"):
     
     # minnka learning rate þegar netið er að þjálfast 
     global_step = tf.Variable(0, trainable=False)
-    starter_learning_rate = 0.001
+    starter_learning_rate = 0.0001
     learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
-                                           10000, 0.5, staircase=True)
+                                           100000, 0.9, staircase=True)
     
     optimizer = tf.train.AdamOptimizer(learning_rate)
     training_op = optimizer.minimize(loss, global_step=global_step)
@@ -102,7 +104,7 @@ init = tf.global_variables_initializer()
 
 # Keyrslufasi
 print('keyrsla')
-epochs=100000
+epochs=50000
 batch = 100
 
 with tf.Session() as sess:
@@ -122,7 +124,7 @@ with tf.Session() as sess:
                         feed_dict={X: Xtrain})
 
                 save_path = saver.save(sess, "./autocoder/save/")
-                print("{:8d}:  cell acc: {:4.2f}%  accuracy: {:4.2f}%  Loss: {:4.4}  Learning rate: {:.4f}".format(
+                print("{:8d}:  cell acc: {:4.2f}%  accuracy: {:4.2f}%  Loss: {:4.4}  Learning rate: {:f}".format(
                         gstep, cellacc_test*100, acc_test*100, loss_test, lrate))
     summary, gstep = sess.run([merged, global_step],  feed_dict={X: Xtrain})
     file_writer.add_summary(summary, gstep)
